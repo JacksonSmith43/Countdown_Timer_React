@@ -13,10 +13,12 @@ const CountdownComponent = () => {
   const [secondsState, setSeconds] = useState(0);
   const [textState, setText] = useState("");
   const [isRunning, setIsRunning] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
   const [isStartButtonVisible, setIsStartButtonVisible] = useState(true);
   const [isPauseButtonVisible, setIsPauseButtonVisible] = useState(false);
   const [isResetButtonVisible, setIsResetButtonVisible] = useState(true);
+
 
   useEffect(() => {
     console.log("states: ", {
@@ -25,12 +27,14 @@ const CountdownComponent = () => {
       seconds: secondsState,
       text: textState,
       isRunning: isRunning,
+      isPaused: isPaused,
     });
-  }, [hoursState, minutesState, secondsState, textState, isRunning]);
+  }, [hoursState, minutesState, secondsState, textState, isRunning, isPaused]);
 
 
   useEffect(() => {
-    if (isRunning) {
+
+    if (isRunning && !isPaused) {
 
       intervalRef.current = setInterval(() => {
 
@@ -57,39 +61,44 @@ const CountdownComponent = () => {
         }
 
       }, 1000);
+
     }
 
     return () => clearInterval(intervalRef.current);
 
-  }, [isRunning, hoursState, minutesState, secondsState]);
+  }, [isRunning, hoursState, minutesState, secondsState, isPaused]);
 
-  
+
 
   useEffect(() => {
-    if (isRunning && (hoursState > 0 || minutesState > 0 || secondsState > 0)) {
+    if (isRunning && (hoursState > 0 || minutesState > 0 || secondsState > 0) && !isPaused) {
       setText(`${String(hoursState).padStart(2, "0")}:${String(minutesState).padStart(2, "0")}:${String(secondsState).padStart(2, "0")}`);
     }
 
-  }, [hoursState, minutesState, secondsState, isRunning])
+  }, [hoursState, minutesState, secondsState, isRunning, isPaused])
 
 
   function handleStartClick() {
-    const hours = parseInt(hoursInput.current.value) || 0;
-    const minutes = parseInt(minutesInput.current.value) || 0;
-    const seconds = parseInt(secondsInput.current.value) || 0;
+
+    if (!isPaused) {
+      const hours = parseInt(hoursInput.current.value) || 0;
+      const minutes = parseInt(minutesInput.current.value) || 0;
+      const seconds = parseInt(secondsInput.current.value) || 0;
+
+      if (hours === 0 && minutes === 0 && seconds === 0) {
+        setText("Input missing.");
+        return;
+      }
+
+      setHours(hours);
+      setMinutes(minutes);
+      setSeconds(seconds);
+    }
 
     setIsStartButtonVisible(false);
     setIsPauseButtonVisible(true);
     setIsResetButtonVisible(true);
-
-    if (hours === 0 && minutes === 0 && seconds === 0) {
-      setText("Input missing.");
-      return;
-    }
-
-    setHours(hours);
-    setMinutes(minutes);
-    setSeconds(seconds);
+    setIsPaused(false);
 
     setTimeout(() => {
       setIsRunning(true);
@@ -101,26 +110,28 @@ const CountdownComponent = () => {
     setIsStartButtonVisible(true);
     setIsPauseButtonVisible(false);
     setIsResetButtonVisible(true);
+    setIsRunning(false);
+    setIsPaused(true);
 
     clearInterval(intervalRef.current);
-    
   }
 
   function handleResetClick() {
     setIsStartButtonVisible(true);
     setIsPauseButtonVisible(false);
     setIsResetButtonVisible(true);
-
-    console.log("hoursState_2:", hoursState);
+    setIsRunning(false);
+    setIsPaused(false);
 
     hoursInput.current.value = "";
     minutesInput.current.value = "";
     secondsInput.current.value = "";
-    setHours(0);
-    setMinutes(0);
-    setSeconds(0);
 
-    // clearInterval(intervalRef.cuurent);
+    setText("");
+
+    clearInterval(intervalRef.current);
+
+
   }
 
   return (
